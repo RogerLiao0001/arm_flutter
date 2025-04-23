@@ -1,4 +1,4 @@
-name: app_2
+name: remote
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -34,11 +34,16 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  flutter_vlc_player: ^7.4.2
+  flutter_vlc_player: ^7.4.3
   flutter_riverpod: ^2.6.1
   mqtt_client: ^10.5.1
-  flutter_mjpeg: ^2.0.4
+  #flutter_mjpeg: ^2.0.4
   flutter_joystick: ^0.2.1
+  flutter_webrtc: ^0.12.12+hotfix.1
+  livekit_client: ^2.4.1
+  #fijkplayer: ^0.10.1
+  #flutter_live: ^1.0.17 
+
 
 dev_dependencies:
   flutter_test:

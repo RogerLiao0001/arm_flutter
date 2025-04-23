@@ -1,3 +1,4 @@
+//services/mqtt_service.dart
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
@@ -26,8 +27,13 @@ class MqttService {
     _client = MqttServerClient(broker, clientId);
     _client!.port = port;
     _client!.logging(on: true);
-    _client!.keepAlivePeriod = 20;
+    _client!.keepAlivePeriod = 60; // 延長 keepAlivePeriod
+    _client!.autoReconnect = true; // 啟用自動重連
+    _client!.resubscribeOnAutoReconnect = true; // 重連時自動重新訂閱
+
     _client!.onDisconnected = _onDisconnected;
+    _client!.onConnected = _onConnected;
+    _client!.onSubscribed = _onSubscribed;
 
     // 設定連線訊息與（若需要）帳密驗證
     if (username != null && password != null) {
@@ -47,6 +53,7 @@ class MqttService {
     } catch (e) {
       print('MQTT: 連線失敗，原因：$e');
       disconnect();
+      return;
     }
 
     if (_client!.connectionStatus?.state == MqttConnectionState.connected) {
@@ -63,10 +70,20 @@ class MqttService {
     _onDisconnected();
   }
 
+  /// 連線成功回呼
+  void _onConnected() {
+    print('MQTT: onConnected callback invoked.');
+  }
+
   /// 連線中斷回呼
   void _onDisconnected() {
     print('MQTT: 連線中斷');
     _client = null;
+  }
+
+  /// _onSubscribed 回呼：當成功訂閱後被呼叫
+  void _onSubscribed(String topic) {
+    print('MQTT: 已訂閱主題: $topic');
   }
 
   /// 訂閱指定 Topic
@@ -74,16 +91,21 @@ class MqttService {
     if (_client == null) return;
     print('MQTT: 訂閱 => $topic');
     _client!.subscribe(topic, MqttQos.atLeastOnce);
-    _client!.updates!.listen((List<MqttReceivedMessage<MqttMessage>> c) {
-      final recMess = c[0].payload as MqttPublishMessage;
-      final pt = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-      print('MQTT: [${c[0].topic}] $pt');
+    _client!.updates!.listen((List<MqttReceivedMessage<MqttMessage>> messages) {
+      for (var message in messages) {
+        final recMess = message.payload as MqttPublishMessage;
+        final pt = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+        print('MQTT: [${message.topic}] $pt');
+      }
     });
   }
 
   /// 發佈訊息到指定 Topic
   void publish(String topic, String message) {
-    if (_client == null) return;
+    if (_client == null) {
+      print('MQTT: 無法發佈，尚未連線');
+      return;
+    }
     final builder = MqttClientPayloadBuilder();
     builder.addString(message);
     print('MQTT: 發佈 => topic: $topic, message: $message');

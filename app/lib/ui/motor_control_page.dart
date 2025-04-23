@@ -1,142 +1,140 @@
-import 'dart:typed_data';
+//motor_control_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_joystick/flutter_joystick.dart';
-import 'package:mqtt_client/mqtt_client.dart'; // 用於取得連線狀態
+import 'package:livekit_client/livekit_client.dart';
+import 'package:mqtt_client/mqtt_client.dart' show MqttConnectionState;
 import '../providers/arm_controller_provider.dart';
-import '../logic/arm_controller.dart'; // 取得 ArmController 類型
-import 'package:mqtt_client/mqtt_server_client.dart';
+import '../logic/arm_controller.dart';
 
-// ----------------------------------------------------------------------
-// 這裡建立一個獨立的 widget，用於接收雲端 MQTT 影像串流並顯示
-// ----------------------------------------------------------------------
-class MqttVideoStreamWidget extends StatefulWidget {
-  final String broker;
-  final int port;
-  final String topic;
-  const MqttVideoStreamWidget({
-    Key? key,
-    required this.broker,
-    required this.port,
-    required this.topic,
-  }) : super(key: key);
+/// LiveKit 影像接收 Widget（僅接收，不發送）
+class LiveKitReceiverWidget extends StatefulWidget {
+  final String url;
+  final String token;
+  const LiveKitReceiverWidget({Key? key, required this.url, required this.token})
+      : super(key: key);
 
   @override
-  _MqttVideoStreamWidgetState createState() => _MqttVideoStreamWidgetState();
+  _LiveKitReceiverWidgetState createState() => _LiveKitReceiverWidgetState();
 }
 
-class _MqttVideoStreamWidgetState extends State<MqttVideoStreamWidget> {
-  MqttServerClient? client;
-  Uint8List? latestImage;
-  bool connected = false;
+class _LiveKitReceiverWidgetState extends State<LiveKitReceiverWidget> {
+  Room? _room;
+  RemoteVideoTrack? _videoTrack;
 
   @override
   void initState() {
     super.initState();
-    connect();
+    _connectRoom();
   }
 
-  Future<void> connect() async {
-    client = MqttServerClient(widget.broker, "flutter_video_client");
-    client!.port = widget.port;
-    client!.logging(on: true);
-    client!.keepAlivePeriod = 20;
-    client!.onDisconnected = onDisconnected;
-    client!.onConnected = onConnected;
-    client!.onSubscribed = onSubscribed;
-    final connMess = MqttConnectMessage()
-        .withClientIdentifier("flutter_video_client")
-        .startClean()
-        .withWillQos(MqttQos.atLeastOnce);
-    client!.connectionMessage = connMess;
+  Future<void> _connectRoom() async {
     try {
-      await client!.connect();
-    } catch (e) {
-      print("MQTT video connect exception: $e");
-      disconnect();
-    }
-  }
+      final room = Room(
+        roomOptions: RoomOptions(
+          adaptiveStream: true,
+          dynacast: true,
+        ),
+      );
+      // 加速連線（可選）
+      await room.prepareConnection(widget.url, widget.token);
+      await room.connect(widget.url, widget.token);
+      print('Connected to room: ${room.name}');
 
-  void disconnect() {
-    client?.disconnect();
-    setState(() {
-      connected = false;
-    });
-  }
+      // 當房間狀態變更時更新 UI
+      room.addListener(() {
+        setState(() {});
+      });
 
-  void onConnected() {
-    print("Video MQTT Connected");
-    setState(() {
-      connected = true;
-    });
-    client!.subscribe(widget.topic, MqttQos.atLeastOnce);
-    client!.updates!.listen((List<MqttReceivedMessage<MqttMessage>> messages) {
-      for (var message in messages) {
-        if (message.topic == widget.topic) {
-          final recMess = message.payload as MqttPublishMessage;
-          final payload = recMess.payload.message;
-          setState(() {
-            latestImage = Uint8List.fromList(payload);
-          });
+      // 如果房間中已有遠端參與者，直接取第一個視頻軌道
+      for (final participant in room.remoteParticipants.values) {
+        for (final pub in participant.trackPublications.values) {
+          if (pub.track != null && pub.track is RemoteVideoTrack) {
+            print('Found existing video track from: ${participant.identity}');
+            setState(() {
+              _videoTrack = pub.track as RemoteVideoTrack;
+            });
+          }
         }
       }
-    });
-  }
-
-  void onDisconnected() {
-    print("Video MQTT Disconnected");
-    setState(() {
-      connected = false;
-    });
-  }
-
-  void onSubscribed(String topic) {
-    print("Subscribed to video topic: $topic");
+      setState(() {
+        _room = room;
+      });
+    } catch (e) {
+      print('Connection error: $e');
+    }
   }
 
   @override
   void dispose() {
-    client?.disconnect();
+    _room?.disconnect();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (latestImage != null) {
-      return Image.memory(latestImage!, fit: BoxFit.cover);
-    } else {
-      return const Center(child: CircularProgressIndicator());
-    }
+    return _videoTrack != null
+        ? VideoTrackRenderer(_videoTrack!)
+        : Container(
+            color: Colors.black,
+            child: const Center(
+              child: Text(
+                'Waiting for stream...(Click setting to reload)',
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+            ),
+          );
   }
 }
 
-// ----------------------------------------------------------------------
-// 以下為主頁面，包含馬達控制與影像串流整合
-// ----------------------------------------------------------------------
+/// 主頁面：包含 LiveKit 影像串流、MQTT 狀態與馬達控制部分（不動）
 class MotorControlPage extends ConsumerStatefulWidget {
   const MotorControlPage({Key? key}) : super(key: key);
+
   @override
   ConsumerState<MotorControlPage> createState() => _MotorControlPageState();
 }
 
 class _MotorControlPageState extends ConsumerState<MotorControlPage> {
-  final double threshold = 0.1;
-  final double factor = 2.0;
-  // 這裡用 _cameraUrl 作為參考（用於編輯），但實際影像來源來自 MQTT 串流 widget
-  String _cameraUrl = "http://192.168.102.65/stream"; 
+  // 將 LiveKit 參數改為可變變數，便於後續修改
+  String livekitUrl = 'wss://test-wfkuoo8g.livekit.cloud';
+  String livekitToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoid2ViLXJlY2VpdmVyIiwidmlkZW8iOnsicm9vbUpvaW4iOnRydWUsInJvb20iOiJteS1yb29tIiwiY2FuUHVibGlzaCI6dHJ1ZSwiY2FuU3Vic2NyaWJlIjp0cnVlLCJjYW5QdWJsaXNoRGF0YSI6dHJ1ZX0sInN1YiI6IndlYi1yZWNlaXZlciIsImlzcyI6IkFQSVQ1OFd5enFQN1hQTSIsIm5iZiI6MTc0MzAxMzMyMiwiZXhwIjoxNzQzMDM0OTIyfQ.h_uOZZheRgoCk4cMNSj3dQI9lksT1S9O0tyYSSOA_ro';
 
-  Future<void> _editCameraUrl() async {
-    TextEditingController controller = TextEditingController(text: _cameraUrl);
+  // 重新生成 LiveKitReceiverWidget 的 key
+  Key _receiverKey = UniqueKey();
+
+  // 馬達控制部分
+  double _sliderVal1 = 90;
+  double _sliderVal2 = 90;
+  double _sliderVal3 = 90;
+  double _sliderVal4 = 90;
+  double _sliderVal5 = 90;
+  bool _isElectromagnetOn = false;
+
+  // 開啟設定對話框以修改 LiveKit 參數
+  Future<void> _editStreamingSettings() async {
+    TextEditingController urlController = TextEditingController(text: livekitUrl);
+    TextEditingController tokenController = TextEditingController(text: livekitToken);
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("設定串流 URL"),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: "Camera Stream URL",
-            ),
+          title: const Text("修改串流設定"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: urlController,
+                decoration: const InputDecoration(
+                  labelText: "LiveKit URL",
+                ),
+              ),
+              TextField(
+                controller: tokenController,
+                decoration: const InputDecoration(
+                  labelText: "LiveKit Token",
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -146,11 +144,14 @@ class _MotorControlPageState extends ConsumerState<MotorControlPage> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  _cameraUrl = controller.text.trim();
+                  livekitUrl = urlController.text.trim();
+                  livekitToken = tokenController.text.trim();
+                  // 更新 key 以刷新 LiveKitReceiverWidget
+                  _receiverKey = UniqueKey();
                 });
                 Navigator.of(context).pop();
               },
-              child: const Text("確定"),
+              child: const Text("儲存"),
             ),
           ],
         );
@@ -158,123 +159,115 @@ class _MotorControlPageState extends ConsumerState<MotorControlPage> {
     );
   }
 
-  Widget buildJoystick(
-    String label, {
-    required int servoX,
-    required int servoY,
-    required ArmController armController,
+  // 建立單個垂直滑桿小部件
+  Widget _buildServoSlider({
+    required String label,
+    required int servoId,
+    required double currentValue,
+    required ValueChanged<double> onChanged,
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,
-          textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Container(
-          width: 100,
-          height: 100,
-          child: Joystick(
-            mode: JoystickMode.all,
-            listener: (details) {
-              if (details.x.abs() > threshold) {
-                final servo = armController.servos.firstWhere((s) => s.id == servoX);
-                double newAngle = servo.currentAngle + details.x * factor;
-                armController.setServoAngle(servoX, newAngle);
-              }
-              if (details.y.abs() > threshold) {
-                final servo = armController.servos.firstWhere((s) => s.id == servoY);
-                double newAngle = servo.currentAngle + details.y * factor;
-                armController.setServoAngle(servoY, newAngle);
-              }
-              setState(() {});
-            },
+        RotatedBox(
+          quarterTurns: -1,
+          child: Slider(
+            value: currentValue,
+            min: 0,
+            max: 180,
+            divisions: 180,
+            label: "${currentValue.toInt()}°",
+            onChanged: onChanged,
           ),
         ),
+        Text("${currentValue.toInt()}°"),
       ],
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      final mqttService = ref.read(mqttServiceProvider);
-      mqttService.connect();
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final armController = ref.watch(armControllerProvider);
     final mqttService = ref.watch(mqttServiceProvider);
-    String connectionStatus =
-        (mqttService.connectionState == MqttConnectionState.connected) ? "Connected" : "Disconnected";
+    final connectionState = mqttService.connectionState;
+    String connectionStatus = (connectionState == MqttConnectionState.connected)
+        ? "Connected"
+        : "Disconnected";
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Motor Control"),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: "編輯串流 URL",
-            onPressed: _editCameraUrl,
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: "重新連線 MQTT",
-            onPressed: () {
-              mqttService.connect();
-            },
+            icon: const Icon(Icons.settings),
+            tooltip: "修改串流設定",
+            onPressed: _editStreamingSettings,
           ),
         ],
       ),
       body: Column(
         children: [
-          // MQTT 連線狀態顯示
-          Container(
-            padding: const EdgeInsets.all(8),
-            color: Colors.grey[200],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("MQTT Status: ", style: TextStyle(fontSize: 16)),
-                Text(connectionStatus,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-          // 上半部：改為使用 MqttVideoStreamWidget 顯示雲端傳來的影像
+          // 上半部：使用 LiveKitReceiverWidget 接收影像串流
           Expanded(
             flex: 3,
             child: Container(
+              key: _receiverKey, // 用於刷新連線
               width: double.infinity,
               color: Colors.black,
-              child: MqttVideoStreamWidget(
-                broker: "178.128.54.195",
-                port: 1883,
-                topic: "esp32cam/stream",
-              ),
+              child: LiveKitReceiverWidget(url: livekitUrl, token: livekitToken),
             ),
           ),
-          // 下半部：4 個 Joystick 區域（2x2 格狀排列）
+          // 中間：MQTT 狀態顯示與重新連線按鈕
+          Container(
+            height: 60,
+            color: Colors.grey[200],
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("MQTT Status: $connectionStatus",
+                    style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 20),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: "重新連線 MQTT",
+                  onPressed: () {
+                    // 重新連線前先斷線
+                    mqttService.disconnect();
+                    mqttService.connect();
+                  },
+                ),
+              ],
+            ),
+          ),
+          // 下半部：電磁帖開關與馬達控制
           Expanded(
             flex: 5,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  const SizedBox(height: 20),
-                  Expanded(
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        buildJoystick("Main Left\n(Servo 1 / Servo 3)",
-                            servoX: 1, servoY: 3, armController: armController),
-                        buildJoystick("Main Right\n(Servo 2 / Servo 4)",
-                            servoX: 2, servoY: 4, armController: armController),
+                        const Text("electromagnet: "),
+                        Switch(
+                          value: _isElectromagnetOn,
+                          onChanged: (bool value) {
+                            setState(() {
+                              _isElectromagnetOn = value;
+                            });
+                            mqttService.publish("servo/electromagnet", value ? "ON" : "OFF");
+                          },
+                        ),
+                        Text(_isElectromagnetOn ? "On" : "Off"),
                       ],
                     ),
                   ),
@@ -283,10 +276,51 @@ class _MotorControlPageState extends ConsumerState<MotorControlPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        buildJoystick("Backup Left\n(Servo 5 / Servo 7)",
-                            servoX: 5, servoY: 7, armController: armController),
-                        buildJoystick("Backup Right\n(Servo 6 / Servo 8)",
-                            servoX: 6, servoY: 8, armController: armController),
+                        _buildServoSlider(
+                          label: "Servo 1",
+                          servoId: 1,
+                          currentValue: _sliderVal1,
+                          onChanged: (val) {
+                            setState(() => _sliderVal1 = val);
+                            armController.setServoAngle(1, val);
+                          },
+                        ),
+                        _buildServoSlider(
+                          label: "Servo 2",
+                          servoId: 2,
+                          currentValue: _sliderVal2,
+                          onChanged: (val) {
+                            setState(() => _sliderVal2 = val);
+                            armController.setServoAngle(2, val);
+                          },
+                        ),
+                        _buildServoSlider(
+                          label: "Servo 3",
+                          servoId: 3,
+                          currentValue: _sliderVal3,
+                          onChanged: (val) {
+                            setState(() => _sliderVal3 = val);
+                            armController.setServoAngle(3, val);
+                          },
+                        ),
+                        _buildServoSlider(
+                          label: "Servo 4",
+                          servoId: 4,
+                          currentValue: _sliderVal4,
+                          onChanged: (val) {
+                            setState(() => _sliderVal4 = val);
+                            armController.setServoAngle(4, val);
+                          },
+                        ),
+                        _buildServoSlider(
+                          label: "Servo 5",
+                          servoId: 5,
+                          currentValue: _sliderVal5,
+                          onChanged: (val) {
+                            setState(() => _sliderVal5 = val);
+                            armController.setServoAngle(5, val);
+                          },
+                        ),
                       ],
                     ),
                   ),
