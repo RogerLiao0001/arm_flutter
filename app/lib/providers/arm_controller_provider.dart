@@ -1,29 +1,31 @@
+// providers/arm_controller_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../logic/arm_controller.dart';
-import '../services/mqtt_service.dart';
+import '../services/mqtt_service.dart'; // Ensure path is correct
 
+// Define only the MQTT service provider
 final mqttServiceProvider = Provider<MqttService>((ref) {
-  return MqttService(
-    broker: '178.128.54.195', // 請確認您的伺服器 IP 或網域名稱
-    port: 1883,              // Mosquitto 預設連線埠號
-    clientId: 'flutter_app', // 自定義 clientId
-    // 如有帳號密碼，可設定：username: 'xxx', password: 'xxx'
-  );
-});
+  // Create unique client ID to avoid conflicts if multiple instances run
+  final clientId = 'flutter_dual_arm_app_${DateTime.now().millisecondsSinceEpoch}_${Uri.base.host}';
 
-final armControllerProvider = Provider<ArmController>((ref) {
-  final mqttService = ref.watch(mqttServiceProvider);
-  final controller = ArmController(mqttService: mqttService);
-  // 初始化 8 顆馬達
-  controller.initializeServos([
-    Servo(id: 1, name: 'Base', minAngle: 0.0, maxAngle: 180.0, currentAngle: 90.0),
-    Servo(id: 2, name: 'Shoulder', minAngle: 0.0, maxAngle: 180.0, currentAngle: 90.0),
-    Servo(id: 3, name: 'Elbow', minAngle: 0.0, maxAngle: 180.0, currentAngle: 90.0),
-    Servo(id: 4, name: 'Claw', minAngle: 0.0, maxAngle: 180.0, currentAngle: 90.0),
-    Servo(id: 5, name: 'Extra1', minAngle: 0.0, maxAngle: 180.0, currentAngle: 90.0),
-    Servo(id: 6, name: 'Extra2', minAngle: 0.0, maxAngle: 180.0, currentAngle: 90.0),
-    Servo(id: 7, name: 'Extra3', minAngle: 0.0, maxAngle: 180.0, currentAngle: 90.0),
-    Servo(id: 8, name: 'Extra4', minAngle: 0.0, maxAngle: 180.0, currentAngle: 90.0),
-  ]);
-  return controller;
+  final service = MqttService(
+    broker: '178.128.54.195', // Your MQTT Broker IP/Domain
+    port: 1883,             // Standard TCP Port (for non-web)
+    websocketPort: 9001,    // <<< !!! YOUR MQTT BROKER's WEBSOCKET PORT !!! >>>
+                            // Common ports: 9001 (WSS), 8083/8080 (WS)
+                            // Make absolutely sure this matches your broker config!
+    clientId: clientId,
+    // Add username/password if required by your broker:
+    // username: 'your_username',
+    // password: 'your_password',
+  );
+
+  // Initial connection attempt (optional, can be triggered by UI instead)
+  // service.connect();
+
+  // Ensure disconnection when the provider is disposed
+  ref.onDispose(() {
+     print("Disposing MQTT Service Provider, disconnecting client...");
+     service.disconnect();
+  });
+  return service;
 });

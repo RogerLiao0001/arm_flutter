@@ -41,6 +41,7 @@ dependencies:
   flutter_joystick: ^0.2.1
   flutter_webrtc: ^0.12.12+hotfix.1
   livekit_client: ^2.4.1
+  http: ^1.2.1 # Add http package
   #fijkplayer: ^0.10.1
   #flutter_live: ^1.0.17 
 
