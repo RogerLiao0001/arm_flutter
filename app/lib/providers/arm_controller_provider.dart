@@ -2,27 +2,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/mqtt_service.dart'; // Ensure path is correct
 
-// Define only the MQTT service provider
 final mqttServiceProvider = Provider<MqttService>((ref) {
-  // Create unique client ID to avoid conflicts if multiple instances run
-  final clientId = 'flutter_dual_arm_app_${DateTime.now().millisecondsSinceEpoch}_${Uri.base.host}';
+  // Use a unique client ID for each session/instance
+  final clientId = 'flutter_webapp_${DateTime.now().millisecondsSinceEpoch}';
 
   final service = MqttService(
-    broker: '178.128.54.195', // Your MQTT Broker IP/Domain
-    port: 1883,             // Standard TCP Port (for non-web)
-    websocketPort: 9001,    // <<< !!! YOUR MQTT BROKER's WEBSOCKET PORT !!! >>>
-                            // Common ports: 9001 (WSS), 8083/8080 (WS)
-                            // Make absolutely sure this matches your broker config!
+    broker: 'roger01.site',    // Domain name for both Web and Native
+    // port: 1883,             // <<<--- REMOVE this line ---<<<
     clientId: clientId,
-    // Add username/password if required by your broker:
+    // Add username/password if needed
     // username: 'your_username',
     // password: 'your_password',
   );
 
-  // Initial connection attempt (optional, can be triggered by UI instead)
-  // service.connect();
-
-  // Ensure disconnection when the provider is disposed
   ref.onDispose(() {
      print("Disposing MQTT Service Provider, disconnecting client...");
      service.disconnect();
