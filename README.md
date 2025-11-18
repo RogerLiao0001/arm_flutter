@@ -97,7 +97,7 @@ cd "Leap motion" && pip install paho-mqtt leap-sdk && python roll_IK.py
 
 ### 3️⃣ AI Publisher（網頁攝影機）
 
-**網址:** https://roger01.site/ai_publisher.html
+ai_publisher.html
 
 **功能:** 攝影機選擇（前/後/外接）、畫質控制、AI 模型選擇、本地 YOLO 預覽
 
@@ -105,7 +105,7 @@ cd "Leap motion" && pip install paho-mqtt leap-sdk && python roll_IK.py
 
 ### 4️⃣ AI Viewer（網頁觀看端）
 
-**網址:** https://roger01.site/ai_viewer.html
+ai_viewer.html
 
 **功能:** 全螢幕顯示、YOLO 疊加開關、滑鼠自動隱藏控制、3 秒自動清除框圖
 
