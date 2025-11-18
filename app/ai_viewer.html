@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>LiveKit AI Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.2.0/dist/livekit-client.umd.min.js"></script>
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; }
+        #video-container { position: relative; width: 100%; height: 100%; }
+        #remote-video, #overlay-canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: translate(-50%, -50%);
+        }
+        #overlay-canvas { pointer-events: none; }
+        #status-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; font-family: sans-serif; font-size: 1.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none; text-align: center;
+        }
+        .controls {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background-color: rgba(30,30,30,0.9); padding: 15px; border-radius: 12px;
+            display: flex; flex-direction: column; gap: 10px; border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px); opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
+            min-width: 280px;
+        }
+        .controls.visible { visibility: visible; opacity: 1; }
+        .control-group { display: flex; align-items: center; justify-content: space-between; }
+        .control-group label { color: white; font-family: sans-serif; user-select: none; font-size: 0.9em; }
+        select { font-size: 0.9em; padding: 5px 10px; border-radius: 6px; border: none; background-color: #007bff; color: white; cursor: pointer; }
+        button { font-size: 0.9em; padding: 8px 12px; border-radius: 6px; border: none; background-color: #6c757d; color: white; cursor: pointer; width: 100%; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 25px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 25px; }
+        .slider:before { position: absolute; content: ""; height: 19px; width: 19px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #28a745; }
+        input:checked + .slider:before { transform: translateX(25px); }
+    </style>
+</head>
+<body>
+    <div id="video-container">
+        <video id="remote-video" autoplay playsinline></video>
+        <canvas id="overlay-canvas"></canvas>
+        <div id="status-overlay">Connecting...</div>
+    </div>
+
+    <div class="controls" id="controls-panel">
+        <div class="control-group">
+            <label for="yolo-toggle">YOLO Overlay</label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="yolo-toggle" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="control-group">
+            <label for="quality-selector">Video Quality</label>
+            <select id="quality-selector">
+                <option value="h1080" selected>High (1080p)</option>
+                <option value="h720">Medium (720p)</option>
+                <option value="h480">Low (480p)</option>
+            </select>
+        </div>
+        <button id="go-to-publisher-btn">Go to Publisher</button>
+    </div>
+
+    <script>
+        const { Room, RoomEvent, Track, VideoPresets, VideoQuality } = LivekitClient;
+
+        const tokenApiUrl = 'https://roger01.site/get-livekit-token';
+        const livekitUrl = 'wss://test-wfkuoo8g.livekit.cloud';
+        const roomName = 'my-room';
+        const viewerIdentity = 'ai-viewer-' + Math.random().toString(36).substring(7);
+
+        const remoteVideo = document.getElementById('remote-video');
+        const overlayCanvas = document.getElementById('overlay-canvas');
+        const yoloToggle = document.getElementById('yolo-toggle');
+        const qualitySelector = document.getElementById('quality-selector');
+        const publisherBtn = document.getElementById('go-to-publisher-btn');
+        const statusOverlay = document.getElementById('status-overlay');
+        const controlsPanel = document.getElementById('controls-panel');
+        const ctx = overlayCanvas.getContext('2d');
+
+        let currentRoom = null;
+        let isYoloEnabled = true;  // 預設開啟
+        let yoloData = null;
+        let currentVideoTrack = null;
+
+        function drawBoxes(results) {
+            if (!remoteVideo.videoWidth || !remoteVideo.videoHeight) {
+                console.log('⚠️ Video not ready yet, dimensions:', remoteVideo.videoWidth, remoteVideo.videoHeight);
+                return;
+            }
+
+            const videoRect = remoteVideo.getBoundingClientRect();
+            overlayCanvas.width = videoRect.width;
+            overlayCanvas.height = videoRect.height;
+            ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+            if (!isYoloEnabled) {
+                console.log('🔇 YOLO overlay is disabled');
+                return;
+            }
+
+            if (!results || !Array.isArray(results)) {
+                console.log('⚠️ No valid results to draw');
+                return;
+            }
+
+            console.log('🎨 Drawing', results.length, 'boxes on canvas');
+            ctx.strokeStyle = '#00FF00';
+            ctx.lineWidth = 3;
+            ctx.font = '16px sans-serif';
+
+            results.forEach(res => {
+                const x = res.box[0] * overlayCanvas.width;
+                const y = res.box[1] * overlayCanvas.height;
+                const w = res.box[2] * overlayCanvas.width;
+                const h = res.box[3] * overlayCanvas.height;
+                const label = `${res.label} ${res.confidence.toFixed(2)}`;
+
+                ctx.strokeRect(x, y, w, h);
+
+                const textWidth = ctx.measureText(label).width;
+                const textHeight = 16;
+                const labelY = y > textHeight + 5 ? y : y + h;
+
+                ctx.fillStyle = '#00FF00';
+                ctx.fillRect(x, labelY - textHeight, textWidth + 10, textHeight + 5);
+
+                ctx.fillStyle = 'black';
+                ctx.fillText(label, x + 5, labelY);
+            });
+        }
+
+        function setVideoQuality(quality) {
+            if (!currentVideoTrack) {
+                console.log('No video track to set quality');
+                return;
+            }
+
+            // LiveKit SDK 使用 setVideoDimensions 或 videoQuality parameter
+            // 這個功能可能不適用於所有 track types
+            console.log('Video quality selector:', quality);
+            // 註：LiveKit 的 adaptive streaming 會自動調整畫質
+        }
+
+        async function connectToRoom() {
+            try {
+                statusOverlay.innerText = 'Fetching token...';
+                const token = await fetchToken();
+                const room = new Room({ adaptiveStream: true, dynacast: true });
+                currentRoom = room;
+
+                room.on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
+                    if (track.kind === Track.Kind.Video) {
+                        currentVideoTrack = track;
+                        track.attach(remoteVideo);
+                        statusOverlay.style.display = 'none';
+                        controlsPanel.classList.add('visible');
+
+                        // 設定初始畫質
+                        setVideoQuality(qualitySelector.value);
+                    }
+                }).on(RoomEvent.TrackUnsubscribed, (track, pub, participant) => {
+                     if(track.kind === Track.Kind.Video) {
+                         track.detach();
+                         currentVideoTrack = null;
+                     }
+                     statusOverlay.innerText = 'Stream ended. Waiting...';
+                     statusOverlay.style.display = 'block';
+                     controlsPanel.classList.remove('visible');
+                }).on(RoomEvent.DataReceived, (payload, participant) => {
+                    console.log('📩 Data received from:', participant.identity);
+                    if (participant.identity === 'yolo-bot') {
+                        const jsonData = new TextDecoder().decode(payload);
+                        console.log('📦 Raw data:', jsonData);
+                        try {
+                            const data = JSON.parse(jsonData);
+                            // 只處理偵測結果（陣列），忽略模型列表（物件）
+                            if (Array.isArray(data)) {
+                                console.log('✅ YOLO detection data received:', data.length, 'objects');
+                                yoloData = data;
+                                drawBoxes(yoloData);
+                            } else {
+                                console.log('ℹ️ Non-detection data (probably model list):', data.type);
+                            }
+                        } catch(e) { console.error("❌ Failed to parse YOLO data:", e); }
+                    }
+                }).on(RoomEvent.Disconnected, () => {
+                    statusOverlay.innerText = 'Disconnected. Retrying...';
+                    controlsPanel.classList.remove('visible');
+                    currentVideoTrack = null;
+                    setTimeout(connectToRoom, 3000);
+                });
+
+                await room.connect(livekitUrl, token);
+                console.log('Connected to room:', room.name);
+                statusOverlay.innerText = 'Connected. Waiting for stream...';
+
+            } catch (error) {
+                console.error('Connection failed:', error);
+                statusOverlay.innerText = `Error: ${error.message}`;
+            }
+        }
+
+        async function fetchToken() {
+            const response = await fetch(`${tokenApiUrl}?identity=${viewerIdentity}`);
+            if (!response.ok) {
+                const err = await response.text();
+                throw new Error(`API Error: ${err}`);
+            }
+            const data = await response.json();
+            return data.token;
+        }
+
+        yoloToggle.addEventListener('change', (e) => {
+            isYoloEnabled = e.target.checked;
+            drawBoxes(yoloData);
+        });
+
+        qualitySelector.addEventListener('change', (e) => {
+            setVideoQuality(e.target.value);
+        });
+
+        publisherBtn.addEventListener('click', () => {
+            window.location.href = '/ai_publisher.html';
+        });
+
+        // 滑鼠移動顯示控制面板，停止移動3秒後自動隱藏
+        let hideTimeout;
+        let isMouseOverControls = false;
+
+        // 滑鼠移動時顯示控制面板
+        document.addEventListener('mousemove', () => {
+            // 顯示控制面板
+            controlsPanel.classList.add('visible');
+
+            // 清除之前的計時器
+            if (hideTimeout) clearTimeout(hideTimeout);
+
+            // 3秒後自動隱藏（如果滑鼠不在控制面板上）
+            hideTimeout = setTimeout(() => {
+                if (!isMouseOverControls) {
+                    controlsPanel.classList.remove('visible');
+                }
+            }, 3000);
+        });
+
+        // 滑鼠懸停在控制面板上時保持顯示
+        controlsPanel.addEventListener('mouseenter', () => {
+            isMouseOverControls = true;
+            controlsPanel.classList.add('visible');
+            if (hideTimeout) clearTimeout(hideTimeout);
+        });
+
+        controlsPanel.addEventListener('mouseleave', () => {
+            isMouseOverControls = false;
+            // 離開控制面板後3秒隱藏
+            hideTimeout = setTimeout(() => {
+                controlsPanel.classList.remove('visible');
+            }, 3000);
+        });
+
+        window.addEventListener('resize', () => drawBoxes(yoloData));
+        remoteVideo.addEventListener('resize', () => drawBoxes(yoloData));
+
+        connectToRoom();
+    </script>
+</body>
+</html>

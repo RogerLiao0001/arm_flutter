@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveKit AI Publisher</title>
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.2.0/dist/livekit-client.umd.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; margin: 0; background-color: #121212; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        .container { text-align: center; padding: 20px; background-color: #1e1e1e; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 90%; width: 100%; max-width: 600px; }
+        .video-wrapper { position: relative; width: 100%; max-width: 480px; margin: 0 auto 20px auto; }
+        #local-video, #overlay-canvas {
+            width: 100%; height: auto; border-radius: 8px;
+        }
+        #local-video { background-color: #000; }
+        #overlay-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        button, select { font-size: 1em; padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; background-color: #007bff; color: white; transition: background-color 0.2s; margin: 5px; }
+        select { -webkit-appearance: none; appearance: none; padding-right: 30px; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 10px auto; }
+        button:disabled, select:disabled { background-color: #555; cursor: not-allowed; }
+        button.secondary { background-color: #6c757d; }
+        #status { margin-top: 15px; font-style: italic; color: #aaa; min-height: 20px; }
+        .settings-panel { background-color: #2a2a2a; border-radius: 8px; padding: 15px; margin-bottom: 15px; text-align: left; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .setting-item:last-child { margin-bottom: 0; }
+        .setting-label { font-size: 0.9em; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 25px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 25px; }
+        .slider:before { position: absolute; content: ""; height: 19px; width: 19px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #007bff; }
+        input:checked + .slider:before { transform: translateX(25px); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LiveKit AI Publisher</h1>
+        <div class="settings-panel">
+            <div class="setting-item">
+                <span class="setting-label">Camera</span>
+                <select id="camera-selector">
+                    <option value="">Loading cameras...</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">AI Model</span>
+                <select id="model-selector" disabled><option value="none">No Model</option></select>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">Show Overlay</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="overlay-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">Video Quality</span>
+                <select id="quality-selector" disabled>
+                    <option value="h1080" selected>High (1080p)</option>
+                    <option value="h720">Medium (720p)</option>
+                    <option value="h480">Low (480p)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="video-wrapper">
+            <video id="local-video" autoplay muted playsinline></video>
+            <canvas id="overlay-canvas"></canvas>
+        </div>
+
+        <div class="controls-section">
+            <button id="toggle-publish-btn">Start Publishing</button>
+            <button id="go-to-viewer-btn" class="secondary">Go to Viewer</button>
+        </div>
+        <div id="status">Status: Disconnected</div>
+    </div>
+
+    <script>
+        const { Room, Track, VideoPresets } = LivekitClient;
+
+        const tokenApiUrl = 'https://roger01.site/get-livekit-token';
+        const livekitUrl = 'wss://test-wfkuoo8g.livekit.cloud';
+        const roomName = 'my-room';
+        const publisherIdentity = 'webcam-publisher';
+
+        const dom = {
+            toggleBtn: document.getElementById('toggle-publish-btn'),
+            viewerBtn: document.getElementById('go-to-viewer-btn'),
+            cameraSelector: document.getElementById('camera-selector'),
+            modelSelector: document.getElementById('model-selector'),
+            qualitySelector: document.getElementById('quality-selector'),
+            overlayToggle: document.getElementById('overlay-toggle'),
+            status: document.getElementById('status'),
+            video: document.getElementById('local-video'),
+            overlayCanvas: document.getElementById('overlay-canvas'),
+        };
+
+        const overlayCtx = dom.overlayCanvas.getContext('2d');
+        let isOverlayEnabled = true;
+        let yoloData = null;
+
+        const state = {
+            room: null,
+            isPublishing: false,
+            localStream: null,
+            currentVideoTrack: null,
+            availableCameras: [],
+            currentDeviceId: null,
+        };
+
+        function drawBoxes(results) {
+            if (!dom.video.videoWidth || !dom.video.videoHeight) return;
+
+            const videoRect = dom.video.getBoundingClientRect();
+            dom.overlayCanvas.width = videoRect.width;
+            dom.overlayCanvas.height = videoRect.height;
+            overlayCtx.clearRect(0, 0, dom.overlayCanvas.width, dom.overlayCanvas.height);
+
+            if (!isOverlayEnabled || !results || !Array.isArray(results)) return;
+
+            overlayCtx.strokeStyle = '#00FF00';
+            overlayCtx.lineWidth = 1.5;  // 更細，適合小畫面
+            overlayCtx.font = '11px sans-serif';  // 更小字體
+
+            results.forEach(res => {
+                const x = res.box[0] * dom.overlayCanvas.width;
+                const y = res.box[1] * dom.overlayCanvas.height;
+                const w = res.box[2] * dom.overlayCanvas.width;
+                const h = res.box[3] * dom.overlayCanvas.height;
+                const label = `${res.label} ${res.confidence.toFixed(2)}`;
+
+                overlayCtx.strokeRect(x, y, w, h);
+
+                const textWidth = overlayCtx.measureText(label).width;
+                const textHeight = 11;
+                const labelY = y > textHeight + 4 ? y : y + h;
+
+                overlayCtx.fillStyle = '#00FF00';
+                overlayCtx.fillRect(x, labelY - textHeight - 1, textWidth + 6, textHeight + 3);
+
+                overlayCtx.fillStyle = 'black';
+                overlayCtx.fillText(label, x + 3, labelY);
+            });
+        }
+
+        async function loadCameras() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                state.availableCameras = devices.filter(d => d.kind === 'videoinput');
+
+                dom.cameraSelector.innerHTML = '';
+                if (state.availableCameras.length === 0) {
+                    dom.cameraSelector.innerHTML = '<option value="">No cameras found</option>';
+                    return;
+                }
+
+                state.availableCameras.forEach((camera, index) => {
+                    const label = camera.label || `Camera ${index + 1}`;
+                    const option = new Option(label, camera.deviceId);
+                    dom.cameraSelector.appendChild(option);
+                });
+
+                // 選擇第一個作為預設（通常是主鏡頭）
+                if (state.availableCameras.length > 0) {
+                    state.currentDeviceId = state.availableCameras[0].deviceId;
+                    dom.cameraSelector.disabled = false;
+                }
+            } catch (error) {
+                console.error('Failed to enumerate cameras:', error);
+                dom.cameraSelector.innerHTML = '<option value="">Error loading cameras</option>';
+            }
+        }
+
+        function populateModels(models, currentModel) {
+            dom.modelSelector.innerHTML = '<option value="none">No Model</option>';
+            if (!models || models.length === 0) return;
+            models.forEach(modelName => {
+                const displayName = modelName.replace('.pt', '');
+                const option = new Option(displayName, modelName);
+                if (modelName === currentModel) option.selected = true;
+                dom.modelSelector.appendChild(option);
+            });
+            dom.modelSelector.disabled = false;
+        }
+
+        function requestModelList() {
+            if (!state.room) return;
+            const payload = { type: "requestModels" };
+            const data = new TextEncoder().encode(JSON.stringify(payload));
+            state.room.localParticipant.publishData(data, { reliable: true });
+        }
+
+        async function switchCamera() {
+            if (!state.isPublishing || !state.room) return;
+            try {
+                dom.status.innerText = 'Status: Switching camera...';
+
+                if (state.localStream) {
+                    state.localStream.getTracks().forEach(track => track.stop());
+                }
+                if (state.currentVideoTrack) {
+                    await state.room.localParticipant.unpublishTrack(state.currentVideoTrack);
+                }
+
+                const selectedQuality = dom.qualitySelector.value;
+                const resolution = VideoPresets[selectedQuality] || VideoPresets.h1080;
+                const selectedDeviceId = dom.cameraSelector.value;
+
+                const constraints = {
+                    video: {
+                        width: resolution.width,
+                        height: resolution.height,
+                        frameRate: resolution.frameRate,
+                    },
+                    audio: false
+                };
+
+                if (selectedDeviceId) {
+                    constraints.video.deviceId = { exact: selectedDeviceId };
+                }
+
+                state.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                state.currentDeviceId = selectedDeviceId;
+
+                dom.video.srcObject = state.localStream;
+
+                const videoTrack = state.localStream.getVideoTracks()[0];
+                state.currentVideoTrack = videoTrack;
+                await state.room.localParticipant.publishTrack(videoTrack, {
+                    source: Track.Source.Camera,
+                    name: 'camera',
+                    simulcast: true,
+                });
+
+                dom.status.innerText = 'Status: Publishing!';
+                console.log(`Switched to device ${selectedDeviceId}`);
+            } catch (error) {
+                console.error('Failed to switch camera:', error);
+                dom.status.innerText = `Error: ${error.message}`;
+            }
+        }
+
+        async function setAiModel() {
+            if (!state.isPublishing || !state.room) return;
+            const selectedModel = dom.modelSelector.value;
+            const payload = { type: "setModel", model: selectedModel };
+            const data = new TextEncoder().encode(JSON.stringify(payload));
+            await state.room.localParticipant.publishData(data, { reliable: true });
+            dom.status.innerText = `Status: Switching to ${selectedModel.replace('.pt', '')}...`;
+        }
+
+        async function startPublishing() {
+            dom.toggleBtn.disabled = true;
+            dom.status.innerText = 'Status: Starting camera...';
+
+            try {
+                const selectedQuality = dom.qualitySelector.value;
+                const resolution = VideoPresets[selectedQuality] || VideoPresets.h1080;
+                const selectedDeviceId = dom.cameraSelector.value;
+
+                const constraints = {
+                    video: {
+                        width: resolution.width,
+                        height: resolution.height,
+                        frameRate: resolution.frameRate,
+                    },
+                    audio: false
+                };
+
+                // 如果有選擇特定攝影機，使用 deviceId
+                if (selectedDeviceId) {
+                    constraints.video.deviceId = { exact: selectedDeviceId };
+                }
+
+                state.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                state.currentDeviceId = selectedDeviceId;
+
+                dom.video.srcObject = state.localStream;
+                console.log('Camera started successfully');
+
+                dom.status.innerText = 'Status: Fetching token...';
+                const token = await fetchToken();
+
+                state.room = new Room({ adaptiveStream: true, dynacast: true });
+                state.room
+                    .on('disconnected', cleanup)
+                    .on('dataReceived', (payload, participant) => {
+                        if (!participant) return;
+                        try {
+                            const jsonData = new TextDecoder().decode(payload);
+                            const data = JSON.parse(jsonData);
+                            if (data.type === 'modelList') {
+                                populateModels(data.models, data.current);
+                            } else if (Array.isArray(data)) {
+                                // 接收 YOLO 偵測結果並畫在本地 overlay
+                                yoloData = data;
+                                drawBoxes(yoloData);
+                            }
+                        } catch (e) {
+                            console.error("Failed to parse data:", e);
+                        }
+                    });
+
+                dom.status.innerText = 'Status: Connecting...';
+                await state.room.connect(livekitUrl, token);
+
+                dom.status.innerText = 'Status: Publishing...';
+
+                const videoTrack = state.localStream.getVideoTracks()[0];
+                state.currentVideoTrack = videoTrack;
+                await state.room.localParticipant.publishTrack(videoTrack, {
+                    source: Track.Source.Camera,
+                    name: 'camera',
+                    simulcast: true,
+                });
+
+                dom.toggleBtn.innerText = 'Stop Publishing';
+                dom.qualitySelector.disabled = true;
+                dom.status.innerText = 'Status: Publishing!';
+
+                setTimeout(requestModelList, 1000);
+
+            } catch (error) {
+                console.error('Failed to start publishing:', error);
+                dom.status.innerText = `Error: ${error.message}`;
+                await cleanup();
+            } finally {
+                dom.toggleBtn.disabled = false;
+            }
+        }
+
+        async function cleanup() {
+            state.isPublishing = false;
+            if (state.room) {
+                await state.room.disconnect();
+                state.room = null;
+            }
+            if (state.localStream) {
+                state.localStream.getTracks().forEach(track => track.stop());
+                state.localStream = null;
+                dom.video.srcObject = null;
+            }
+
+            state.currentVideoTrack = null;
+            dom.toggleBtn.innerText = 'Start Publishing';
+            dom.modelSelector.disabled = true;
+            dom.modelSelector.innerHTML = '<option value="none">No Model</option>';
+            dom.qualitySelector.disabled = false;
+            dom.status.innerText = 'Status: Disconnected';
+        }
+
+        async function fetchToken() {
+            const response = await fetch(`${tokenApiUrl}?identity=${publisherIdentity}`);
+            if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+            const data = await response.json();
+            return data.token;
+        }
+
+        dom.toggleBtn.addEventListener('click', () => {
+            state.isPublishing ? cleanup() : startPublishing();
+        });
+        dom.viewerBtn.addEventListener('click', () => {
+            window.location.href = '/ai_viewer.html';
+        });
+        dom.modelSelector.addEventListener('change', setAiModel);
+        dom.cameraSelector.addEventListener('change', () => {
+            if (state.isPublishing) {
+                switchCamera();
+            }
+        });
+        dom.overlayToggle.addEventListener('change', (e) => {
+            isOverlayEnabled = e.target.checked;
+            drawBoxes(yoloData);
+        });
+
+        // 畫面調整時重繪
+        window.addEventListener('resize', () => drawBoxes(yoloData));
+        dom.video.addEventListener('resize', () => drawBoxes(yoloData));
+
+        // 頁面載入時列出所有攝影機
+        loadCameras();
+    </script>
+</body>
+</html>

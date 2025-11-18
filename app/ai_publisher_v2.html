@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveKit AI Publisher - AWS GPU</title>
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.2.0/dist/livekit-client.umd.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; margin: 0; background-color: #121212; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        .container { text-align: center; padding: 20px; background-color: #1e1e1e; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 90%; width: 100%; max-width: 600px; }
+        .video-wrapper { position: relative; width: 100%; max-width: 480px; margin: 0 auto 20px auto; aspect-ratio: 16 / 9; }
+        #local-video { display: none; /* 原始影像完全隱藏 */ }
+        #local-canvas, #overlay-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 8px; background-color: #000; object-fit: contain;
+        }
+        #overlay-canvas { pointer-events: none; background-color: transparent; }
+        button, select { font-size: 1em; padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; background-color: #007bff; color: white; transition: background-color 0.2s; margin: 5px; }
+        select { -webkit-appearance: none; appearance: none; padding-right: 30px; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 10px auto; }
+        button:disabled, select:disabled { background-color: #555; cursor: not-allowed; }
+        #status { margin-top: 15px; font-style: italic; color: #aaa; min-height: 20px; }
+        .settings-panel { background-color: #2a2a2a; border-radius: 8px; padding: 15px; margin-bottom: 15px; text-align: left; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .setting-item:last-child { margin-bottom: 0; }
+        .setting-label { font-size: 0.9em; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 25px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 25px; }
+        .slider:before { position: absolute; content: ""; height: 19px; width: 19px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #28a745; }
+        input:checked + .slider:before { transform: translateX(25px); }
+        .gpu-badge { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: bold; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LiveKit AI Publisher <span class="gpu-badge">AWS GPU</span></h1>
+        <div class="settings-panel">
+            <div class="setting-item">
+                <span class="setting-label">Video Quality</span>
+                <select id="quality-selector">
+                    <option value="h1080" selected>High (1080p)</option>
+                    <option value="h720">Medium (720p)</option>
+                    <option value="h480">Low (480p)</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">Mirror Stream</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="mirror-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">Show Local AI Overlay</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="local-ai-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="video-wrapper">
+            <video id="local-video" playsinline muted></video>
+            <canvas id="local-canvas"></canvas>
+            <canvas id="overlay-canvas"></canvas>
+        </div>
+
+        <div class="controls-section">
+            <button id="toggle-publish-btn">Start Publishing</button>
+        </div>
+        <div id="status">Status: Disconnected | AWS GPU Ready</div>
+    </div>
+
+    <script>
+        const { Room, Track, VideoPresets, DataPacket_Kind } = LivekitClient;
+
+        const tokenApiUrl = 'https://roger01.site/get-livekit-token';
+        const livekitUrl = 'wss://test-wfkuoo8g.livekit.cloud';
+        const roomName = 'my-room';
+        const publisherIdentity = 'webcam-publisher';
+
+        const dom = {
+            toggleBtn: document.getElementById('toggle-publish-btn'),
+            qualitySelector: document.getElementById('quality-selector'),
+            mirrorToggle: document.getElementById('mirror-toggle'),
+            localAiToggle: document.getElementById('local-ai-toggle'),
+            status: document.getElementById('status'),
+            video: document.getElementById('local-video'),
+            canvas: document.getElementById('local-canvas'),
+            overlay: document.getElementById('overlay-canvas'),
+        };
+
+        const ctx = dom.canvas.getContext('2d');
+        const overlayCtx = dom.overlay.getContext('2d');
+
+        const state = {
+            room: null,
+            isPublishing: false,
+            localStream: null,
+            yoloData: null,
+            renderLoopId: null,
+        };
+
+        function drawBoxes(results) {
+            const canvasWidth = dom.overlay.width;
+            const canvasHeight = dom.overlay.height;
+            overlayCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            if (!dom.localAiToggle.checked || !results || !Array.isArray(results)) return;
+
+            overlayCtx.strokeStyle = '#FF8C00'; // 橘色用於本地預覽
+            overlayCtx.lineWidth = 2;
+            overlayCtx.font = '16px sans-serif';
+
+            results.forEach(res => {
+                let x = res.box[0] * canvasWidth;
+                const y = res.box[1] * canvasHeight;
+                let w = res.box[2] * canvasWidth;
+                const h = res.box[3] * canvasHeight;
+
+                if(dom.mirrorToggle.checked) {
+                    x = canvasWidth - x - w;
+                }
+
+                const label = `${res.label} ${res.confidence.toFixed(2)}`;
+                overlayCtx.strokeRect(x, y, w, h);
+                const textWidth = overlayCtx.measureText(label).width;
+                overlayCtx.fillStyle = '#FF8C00';
+                overlayCtx.fillRect(x, y > 20 ? y - 20 : y, textWidth + 10, 20);
+                overlayCtx.fillStyle = 'black';
+                overlayCtx.fillText(label, x + 5, y > 20 ? y - 5 : y + 15);
+            });
+        }
+
+        function renderLoop() {
+            if (!dom.video.videoWidth) {
+                state.renderLoopId = requestAnimationFrame(renderLoop);
+                return;
+            }
+            // 如果啟用鏡像，翻轉 Canvas 繪圖環境
+            if (dom.mirrorToggle.checked) {
+                ctx.save();
+                ctx.scale(-1, 1);
+                ctx.translate(-dom.canvas.width, 0);
+            }
+            // 將影像從隱藏的 <video> 繪製到可見的 <canvas>
+            ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height);
+            // 如果啟用了鏡像，恢復繪圖環境
+            if (dom.mirrorToggle.checked) {
+                ctx.restore();
+            }
+            // 繪製 AI 疊圖
+            drawBoxes(state.yoloData);
+            // 請求下一幀
+            state.renderLoopId = requestAnimationFrame(renderLoop);
+        }
+
+        async function startPublishing() {
+            dom.toggleBtn.disabled = true;
+            dom.status.innerText = 'Status: Starting camera...';
+
+            try {
+                const selectedQuality = dom.qualitySelector.value;
+                const resolution = VideoPresets[selectedQuality] || VideoPresets.h1080;
+
+                state.localStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: resolution.width, height: resolution.height, frameRate: resolution.frameRate },
+                    audio: false
+                });
+
+                dom.video.srcObject = state.localStream;
+                await dom.video.play();
+
+                const trackSettings = state.localStream.getVideoTracks()[0].getSettings();
+                dom.canvas.width = dom.overlay.width = trackSettings.width;
+                dom.canvas.height = dom.overlay.height = trackSettings.height;
+
+                state.renderLoopId = requestAnimationFrame(renderLoop);
+
+                const canvasStream = dom.canvas.captureStream(trackSettings.frameRate);
+                const canvasTrack = canvasStream.getVideoTracks()[0];
+
+                dom.status.innerText = 'Status: Fetching token...';
+                const token = await fetchToken();
+
+                state.room = new Room({ adaptiveStream: true, dynacast: true });
+                state.room
+                    .on('disconnected', cleanup)
+                    .on('dataReceived', (payload, participant) => {
+                        if (participant && participant.identity === 'yolo-bot') {
+                            try {
+                                const jsonData = new TextDecoder().decode(payload);
+                                state.yoloData = JSON.parse(jsonData);
+                            } catch (e) { console.error("Failed to parse YOLO data:", e); }
+                        }
+                    });
+
+                dom.status.innerText = 'Status: Connecting...';
+                await state.room.connect(livekitUrl, token);
+
+                dom.status.innerText = 'Status: Publishing...';
+                await state.room.localParticipant.publishTrack(canvasTrack, {
+                    source: Track.Source.Camera, name: 'camera', simulcast: true,
+                });
+
+                state.isPublishing = true;
+                dom.toggleBtn.innerText = 'Stop Publishing';
+                dom.qualitySelector.disabled = true;
+                dom.status.innerText = 'Status: Publishing! (AWS GPU Processing)';
+
+            } catch (error) {
+                console.error('Failed to start publishing:', error);
+                dom.status.innerText = `Error: ${error.message}`;
+                await cleanup();
+            } finally {
+                dom.toggleBtn.disabled = false;
+            }
+        }
+
+        async function cleanup() {
+            if (state.renderLoopId) {
+                cancelAnimationFrame(state.renderLoopId);
+                state.renderLoopId = null;
+            }
+            if (state.room) {
+                await state.room.disconnect();
+                state.room = null;
+            }
+            if (state.localStream) {
+                state.localStream.getTracks().forEach(track => track.stop());
+                state.localStream = null;
+            }
+            ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+            overlayCtx.clearRect(0, 0, dom.overlay.width, dom.overlay.height);
+
+            state.isPublishing = false;
+            state.yoloData = null;
+            dom.toggleBtn.innerText = 'Start Publishing';
+            dom.qualitySelector.disabled = false;
+            dom.status.innerText = 'Status: Disconnected | AWS GPU Ready';
+        }
+
+        async function fetchToken() {
+            const response = await fetch(`${tokenApiUrl}?identity=${publisherIdentity}`);
+            if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+            const data = await response.json();
+            return data.token;
+        }
+
+        dom.toggleBtn.addEventListener('click', () => {
+            state.isPublishing ? cleanup() : startPublishing();
+        });
+    </script>
+</body>
+</html>

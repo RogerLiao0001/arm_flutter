@@ -1,0 +1,11 @@
+# Temporary deployment files
+app/temp/*.tar.gz
+app/temp/*.pkg
+app/temp/*.pem
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
