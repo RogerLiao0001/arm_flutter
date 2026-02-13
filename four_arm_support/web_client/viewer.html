@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Robotic Arm Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.2.0/dist/livekit-client.umd.min.js"></script>
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
+        #video-container { position: relative; width: 100%; height: 100%; }
+        #remote-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: translate(-50%, -50%);
+        }
+        #status-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; font-size: 1.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none; text-align: center;
+        }
+        .controls {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background-color: rgba(30,30,30,0.8); padding: 10px 20px; border-radius: 12px;
+            display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px); color: white;
+        }
+        select { font-size: 1em; padding: 5px 10px; border-radius: 6px; }
+        .id-badge { background: #FF8C00; color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="video-container">
+        <video id="remote-video" autoplay playsinline></video>
+        <div id="status-overlay">Connecting...</div>
+        <!-- Flip Button -->
+        <button id="flip-btn" style="position: absolute; top: 20px; right: 20px; z-index: 100; padding: 8px 12px; background: rgba(0,0,0,0.5); border: 1px solid white; color: white; border-radius: 20px; cursor: pointer;">
+            Flip Video
+        </button>
+    </div>
+
+    <div class="controls">
+        <span>View Arm: </span>
+        <select id="arm-id-selector">
+            <option value="1" selected>Arm 1</option>
+            <option value="2">Arm 2</option>
+            <option value="3">Arm 3</option>
+            <option value="4">Arm 4</option>
+        </select>
+        <span id="target-display" class="id-badge">Target: Arm 1</span>
+    </div>
+
+    <script>
+        const { Room, RoomEvent, Track } = LivekitClient;
+
+        const tokenApiUrl = '/get-livekit-token';
+        const livekitUrl = 'wss://test-wfkuoo8g.livekit.cloud';
+        const roomName = 'my-room';
+
+        const dom = {
+            remoteVideo: document.getElementById('remote-video'),
+            statusOverlay: document.getElementById('status-overlay'),
+            idSelector: document.getElementById('arm-id-selector'),
+            targetDisplay: document.getElementById('target-display'),
+            flipBtn: document.getElementById('flip-btn'),
+        };
+
+        let currentRoom = null;
+        let selectedArmId = '1';
+        let isMirrored = false;
+
+        // Initialize from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialId = urlParams.get('id');
+        if (initialId && ['1', '2', '3', '4'].includes(initialId)) {
+            selectedArmId = initialId;
+            dom.idSelector.value = initialId;
+            updateDisplay();
+        }
+
+        dom.idSelector.addEventListener('change', (e) => {
+            selectedArmId = e.target.value;
+            updateDisplay();
+            // Re-connect to filter tracks correctly
+            connectToRoom();
+        });
+        
+        dom.flipBtn.addEventListener('click', () => {
+            isMirrored = !isMirrored;
+            dom.remoteVideo.style.transform = isMirrored ? 'translate(-50%, -50%) scaleX(-1)' : 'translate(-50%, -50%)';
+            dom.flipBtn.style.color = isMirrored ? '#007bff' : 'white';
+        });
+
+        function updateDisplay() {
+            dom.targetDisplay.innerText = `Target: Arm ${selectedArmId}`;
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('id', selectedArmId);
+            window.history.pushState({}, '', newUrl);
+        }
+
+        async function connectToRoom() {
+            if (currentRoom) {
+                await currentRoom.disconnect();
+            }
+
+            try {
+                dom.statusOverlay.innerText = `Fetching token for Arm ${selectedArmId}...`;
+                const identity = `viewer-${Math.random().toString(36).substring(7)}`;
+                const token = await fetchToken(identity);
+
+                const room = new Room({ adaptiveStream: true, dynacast: true });
+                currentRoom = room;
+
+                const targetPublisher = `webcam-publisher-arm${selectedArmId}`;
+
+                room.on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
+                    if (track.kind === Track.Kind.Video && participant.identity === targetPublisher) {
+                        track.attach(dom.remoteVideo);
+                        dom.statusOverlay.style.display = 'none';
+                    }
+                }).on(RoomEvent.TrackUnsubscribed, (track, pub, participant) => {
+                     if(participant.identity === targetPublisher) {
+                        track.detach();
+                        dom.statusOverlay.innerText = `Arm ${selectedArmId} stream ended.`;
+                        dom.statusOverlay.style.display = 'block';
+                     }
+                }).on(RoomEvent.Disconnected, () => {
+                    dom.statusOverlay.innerText = 'Disconnected.';
+                });
+
+                await room.connect(livekitUrl, token);
+                dom.statusOverlay.innerText = `Connected. Waiting for Arm ${selectedArmId} camera...`;
+
+                // Check if target is already in room
+                const existing = Array.from(room.remoteParticipants.values()).find(p => p.identity === targetPublisher);
+                if (existing) {
+                    const pub = existing.videoTrackPublications[0]; // Simplified
+                    if (pub && pub.track) {
+                        pub.track.attach(dom.remoteVideo);
+                        dom.statusOverlay.style.display = 'none';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Connection failed:', error);
+                dom.statusOverlay.innerText = `Error: ${error.message}`;
+            }
+        }
+
+        async function fetchToken(identity) {
+            const response = await fetch(`${tokenApiUrl}?identity=${identity}&room=${roomName}`);
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            const data = await response.json();
+            return data.token;
+        }
+
+        connectToRoom();
+    </script>
+</body>
+</html>

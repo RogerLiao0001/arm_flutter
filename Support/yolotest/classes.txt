@@ -1,0 +1,5 @@
+object_1
+forefoot
+body
+hind feet
+soles of feet

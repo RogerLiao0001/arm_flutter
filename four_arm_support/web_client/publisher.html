@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>LiveKit WebRTC Publisher</title>
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.2.0/dist/livekit-client.umd.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* *** 修正2：佈局修正 *** */
+            /* 使用 min-height 和 padding，而不是 height: 100vh，以允許內容在小螢幕上滾動 */
+            min-height: 100vh;
+            padding: 20px 0;
+            box-sizing: border-box; /* 確保 padding 不會增加總高度 */
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 95%;
+            max-width: 800px; /* 增加最大寬度以更好地適應橫向影片 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { margin-top: 0; font-size: 1.8em; }
+        .video-wrapper {
+            width: 100%;
+            background-color: #000;
+            border-radius: 8px;
+            aspect-ratio: 16 / 9;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        #local-video {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            object-fit: cover;
+            transition: transform 0.3s; /* 為鏡像切換增加平滑過渡 */
+            /* *** 修正1：移除固定的鏡像 *** */
+            /* 鏡像現在由 JavaScript 動態控制 */
+        }
+        /* *** 新增1：鏡像控制的 class *** */
+        #local-video.mirrored {
+            transform: scaleX(-1);
+        }
+        .controls {
+            display: flex;
+            gap: 15px; /* 按鈕間的間距 */
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            font-size: 1.1em;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        /* *** 新增1：次要按鈕樣式 *** */
+        .secondary-btn {
+             background-color: #6c757d;
+        }
+        .secondary-btn:hover {
+            background-color: #5a6268;
+        }
+        #toggle-mirror-btn {
+             display: none; /* 預設隱藏，發布後顯示 */
+        }
+        #status { margin-top: 20px; font-style: italic; color: #aaa; min-height: 20px; }
+
+        #orientation-prompt {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            color: white; display: none; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+            z-index: 1000; font-size: 1.5em; padding: 20px;
+        }
+        #orientation-prompt p { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div id="orientation-prompt">
+        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.4 3.6a9 9 0 0 0-12.8 0M3.6 16.4a9 9 0 0 0 0 5.6M16.4 20.4a9 9 0 0 0 5.6 0M20.4 3.6a9 9 0 0 0 0 5.6M5 12h14M12 5v14"/></svg>
+        <!-- *** 修正3：英文提示 *** -->
+        <p>For the best experience,<br>please rotate your device to landscape mode.</p>
+    </div>
+
+    <div class="container">
+        <h1>LiveKit WebRTC Publisher</h1>
+        <div class="video-wrapper">
+            <video id="local-video" autoplay muted playsinline></video>
+        </div>
+        <div class="controls">
+            <button id="toggle-publish-btn">Start Publishing</button>
+            <!-- *** 新增1：鏡像切換按鈕 *** -->
+            <button id="toggle-mirror-btn" class="secondary-btn">Toggle Mirror</button>
+        </div>
+        <div id="status">Status: Disconnected</div>
+    </div>
+
+    <script>
+        const { Room, RoomEvent, Track, VideoPresets } = LivekitClient;
+
+        // --- Configuration ---
+        const tokenApiUrl = 'https://roger01.site/get-livekit-token';
+        const livekitUrl = 'wss://test-wfkuoo8g.livekit.cloud';
+        const roomName = 'my-room';
+        
+        // --- Dynamic Identity ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const armId = urlParams.get('id') || '1'; // Default to Arm 1
+        const publisherIdentity = `webcam-publisher-arm${armId}`;
+        
+        // Update Title
+        document.querySelector('h1').innerText = `LiveKit Publisher (Arm ${armId})`;
+
+        // --- DOM Elements ---
+        const toggleBtn = document.getElementById('toggle-publish-btn');
+        const toggleMirrorBtn = document.getElementById('toggle-mirror-btn');
+        const statusDiv = document.getElementById('status');
+        const localVideo = document.getElementById('local-video');
+        const orientationPrompt = document.getElementById('orientation-prompt');
+
+        // --- App State ---
+        let currentRoom = null;
+        let isPublishing = false;
+        let localTrack = null;
+        let isMirrored = false; // *** 新增1：鏡像狀態 ***
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+        function checkOrientation() {
+            const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+            if (isPortrait && isMobile) {
+                orientationPrompt.style.display = 'flex';
+                toggleBtn.disabled = true;
+                statusDiv.innerText = 'Status: Please rotate your device.';
+            } else {
+                orientationPrompt.style.display = 'none';
+                if (!isPublishing) {
+                    toggleBtn.disabled = false;
+                    statusDiv.innerText = 'Status: Disconnected';
+                }
+            }
+        }
+
+        async function startPublishing() {
+            toggleBtn.disabled = true;
+            toggleBtn.innerText = 'Connecting...';
+            statusDiv.innerText = 'Status: Fetching token...';
+
+            try {
+                const token = await fetchToken();
+                if (!token) throw new Error('Failed to get a valid token.');
+                statusDiv.innerText = 'Status: Token acquired. Connecting to room...';
+
+                const room = new Room({ adaptiveStream: true, dynacast: true });
+                currentRoom = room;
+
+                room.on(RoomEvent.Connected, () => statusDiv.innerText = 'Status: Connected! Publishing camera...')
+                    .on(RoomEvent.Disconnected, () => {
+                        statusDiv.innerText = 'Status: Disconnected';
+                        cleanup();
+                    });
+
+                await room.connect(livekitUrl, token);
+                console.log('Connected to room:', room.name);
+
+                // *** 修正1：智慧判斷 facingMode ***
+                const videoOptions = {
+                    // 如果是手機，預設後鏡頭；否則預設前鏡頭
+                    facingMode: isMobile ? 'environment' : 'user',
+                    resolution: VideoPresets.h1080,
+                };
+                
+                console.log(`Creating video track. Mobile: ${isMobile}, FacingMode: ${videoOptions.facingMode}`);
+                localTrack = await LivekitClient.createLocalVideoTrack(videoOptions);
+                
+                // *** 新增1：根據鏡頭設定預設鏡像狀態 ***
+                // 前鏡頭 ('user') 應該像鏡子一樣，後鏡頭 ('environment') 不應該。
+                isMirrored = (localTrack.facingMode === 'user');
+                updateMirrorStyle();
+                
+                localTrack.attach(localVideo);
+                console.log('Local video track created and attached.');
+
+                await room.localParticipant.publishTrack(localTrack);
+                await room.localParticipant.setMicrophoneEnabled(false);
+                console.log('Video track published.');
+
+                isPublishing = true;
+                toggleBtn.innerText = 'Stop Publishing';
+                statusDiv.innerText = 'Status: Publishing!';
+                toggleMirrorBtn.style.display = 'inline-block'; // 顯示鏡像按鈕
+
+            } catch (error) {
+                console.error('Failed to start publishing:', error);
+                statusDiv.innerText = `Error: ${error.message}`;
+                await stopPublishing(); // 使用 await 確保清理完成
+            } finally {
+                toggleBtn.disabled = false;
+            }
+        }
+
+        async function stopPublishing() {
+            if (currentRoom) {
+                await currentRoom.disconnect();
+            }
+            // cleanup() is called by the 'Disconnected' event handler
+        }
+
+        function cleanup() {
+            isPublishing = false;
+            currentRoom = null;
+            toggleBtn.innerText = 'Start Publishing';
+            toggleMirrorBtn.style.display = 'none'; // 隱藏鏡像按鈕
+
+            if (localTrack) {
+                localTrack.stop();
+                localTrack.detach(localVideo);
+                localTrack = null;
+            }
+            checkOrientation();
+        }
+
+        // *** 新增1：更新鏡像樣式的函式 ***
+        function updateMirrorStyle() {
+            if (isMirrored) {
+                localVideo.classList.add('mirrored');
+            } else {
+                localVideo.classList.remove('mirrored');
+            }
+            console.log(`Mirror style updated. Is mirrored: ${isMirrored}`);
+        }
+
+        async function fetchToken() {
+            const response = await fetch(`${tokenApiUrl}?identity=${publisherIdentity}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+            }
+            const data = await response.json();
+            return data.token;
+        }
+
+        // --- Event Listeners ---
+        toggleBtn.addEventListener('click', () => {
+             isPublishing ? stopPublishing() : startPublishing();
+        });
+
+        // *** 新增1：鏡像按鈕的事件監聽 ***
+        toggleMirrorBtn.addEventListener('click', () => {
+            if (!isPublishing) return;
+            isMirrored = !isMirrored;
+            updateMirrorStyle();
+        });
+
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', checkOrientation);
+        document.addEventListener('DOMContentLoaded', checkOrientation);
+    </script>
+</body>
+</html>

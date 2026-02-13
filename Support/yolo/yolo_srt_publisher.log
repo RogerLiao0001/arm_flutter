@@ -1,0 +1,314 @@
+2025-03-26 18:22:51,628 INFO [MainThread] 初始化LiveKit API客户端: https://test-wfkuoo8g.livekit.cloud
+2025-03-26 18:22:51,628 INFO [MainThread] LiveKit API客户端初始化成功
+2025-03-26 18:22:51,628 INFO [MainThread] 正在加载YOLO模型: models/best.pt
+2025-03-26 18:22:51,662 INFO [MainThread] YOLO模型加载成功
+2025-03-26 18:22:52,577 WARNING [MainThread] 清理现有Ingress时出错: status
+2025-03-26 18:22:54,824 INFO [MainThread] 已创建Ingress ID: IN_Lk5AwB5Tz6hh
+2025-03-26 18:22:54,825 INFO [MainThread] 等待Ingress服务准备就绪...
+2025-03-26 18:22:56,830 INFO [MainThread] 启动SRT服务器进程
+2025-03-26 18:22:56,854 INFO [MainThread] SRT服务器启动成功，等待连接
+2025-03-26 18:22:56,854 INFO [MainThread] 初始化摄像头 #0
+2025-03-26 18:23:00,837 INFO [MainThread] 摄像头初始化: 请求=1280x720@15fps, 实际=1280x720@30fps
+2025-03-26 18:23:00,838 INFO [MainThread] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:00,850 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:00,851 INFO [MainThread] FFmpeg推流进程启动成功
+2025-03-26 18:23:00,851 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:00,851 INFO [MainThread] 所有组件已启动，开始推流
+2025-03-26 18:23:00,851 INFO [FrameProducer] 帧生产者线程启动
+2025-03-26 18:23:00,851 INFO [FrameConsumer] 帧消费者线程启动
+2025-03-26 18:23:01,876 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:02,143 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:02,391 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:02,638 WARNING [FrameConsumer] FFmpeg进程已终止，重启中...
+2025-03-26 18:23:02,638 INFO [FrameConsumer] 重启FFmpeg进程
+2025-03-26 18:23:02,640 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:02,991 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:03,239 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:03,548 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:03,643 INFO [FrameConsumer] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:03,656 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:03,656 INFO [FrameConsumer] FFmpeg推流进程启动成功
+2025-03-26 18:23:03,789 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:04,017 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:04,293 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:04,570 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:04,907 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:05,134 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:05,437 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:05,685 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:05,904 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:06,135 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:06,398 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:06,663 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:06,739 ERROR [FFmpegMonitor] FFmpeg错误: [srt @ 0x60000184c140] Connection to srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live failed: Input/output error
+2025-03-26 18:23:06,744 ERROR [FFmpegMonitor] FFmpeg错误: [out#0/mpegts @ 0x600001c440c0] Error opening output srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live: Input/output error
+2025-03-26 18:23:06,744 ERROR [FFmpegMonitor] FFmpeg错误: Error opening output file srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live.
+2025-03-26 18:23:06,744 WARNING [FFmpegMonitor] 检测到3个FFmpeg错误，尝试重启
+2025-03-26 18:23:06,744 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:06,744 INFO [FFmpegMonitor] 终止现有FFmpeg进程
+2025-03-26 18:23:06,745 ERROR [FrameConsumer] FFmpeg管道已关闭 (1/3)，尝试重启
+2025-03-26 18:23:06,745 INFO [FrameConsumer] 已发送 4 帧, 实际FPS: 0.68, 队列中: 10
+2025-03-26 18:23:06,746 WARNING [FrameConsumer] FFmpeg进程已终止，重启中...
+2025-03-26 18:23:06,746 INFO [FrameConsumer] 重启FFmpeg进程
+2025-03-26 18:23:06,911 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:07,138 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:07,375 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:07,656 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:07,750 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:07,751 INFO [FrameConsumer] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:07,793 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:07,793 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:07,793 INFO [FrameConsumer] FFmpeg推流进程启动成功
+2025-03-26 18:23:07,793 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:07,968 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:08,233 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:08,495 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:08,799 WARNING [FrameProducer] 队列满，已丢弃 10 帧
+2025-03-26 18:23:08,799 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:09,091 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:09,318 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:09,543 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:09,765 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:10,024 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:10,243 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:10,476 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:10,703 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:10,874 ERROR [FFmpegMonitor] FFmpeg错误: [srt @ 0x600003314140] Connection to srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live failed: Input/output error
+2025-03-26 18:23:10,878 ERROR [FFmpegMonitor] FFmpeg错误: [out#0/mpegts @ 0x600003718000] Error opening output srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live: Input/output error
+2025-03-26 18:23:10,878 ERROR [FFmpegMonitor] FFmpeg错误: Error opening output file srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live.
+2025-03-26 18:23:10,880 ERROR [FrameConsumer] FFmpeg管道已关闭 (1/3)，尝试重启
+2025-03-26 18:23:10,880 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:10,880 WARNING [FrameConsumer] FFmpeg进程已终止，重启中...
+2025-03-26 18:23:10,880 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:10,880 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:10,880 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:10,880 INFO [FrameConsumer] 重启FFmpeg进程
+2025-03-26 18:23:10,880 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:10,880 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:11,018 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:11,259 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:11,498 WARNING [FrameProducer] 队列满，已丢弃 20 帧
+2025-03-26 18:23:11,498 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:11,735 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:11,880 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:11,890 INFO [FrameConsumer] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:11,891 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:11,891 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:11,908 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:11,909 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:11,910 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:11,909 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:11,910 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:11,910 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:11,910 INFO [FrameConsumer] FFmpeg推流进程启动成功
+2025-03-26 18:23:11,911 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:11,917 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:11,917 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:11,917 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:11,974 INFO [FrameConsumer] 已发送 6 帧, 实际FPS: 0.54, 队列中: 10
+2025-03-26 18:23:12,048 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:12,275 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:12,516 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:12,735 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:12,968 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:13,255 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:13,473 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:13,696 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:13,944 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:14,167 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:14,413 WARNING [FrameProducer] 队列满，已丢弃 30 帧
+2025-03-26 18:23:14,414 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:14,680 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:14,900 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:14,986 ERROR [FFmpegMonitor] FFmpeg错误: [srt @ 0x60000387d180] Connection to srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live failed: Input/output error
+2025-03-26 18:23:14,986 ERROR [FFmpegMonitor] FFmpeg错误: [srt @ 0x6000008b4fa0] Connection to srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live failed: Input/output error
+2025-03-26 18:23:14,989 ERROR [FFmpegMonitor] FFmpeg错误: [out#0/mpegts @ 0x600000cb40c0] Error opening output srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live: Input/output error
+2025-03-26 18:23:14,989 ERROR [FFmpegMonitor] FFmpeg错误: Error opening output file srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live.
+2025-03-26 18:23:14,993 ERROR [FFmpegMonitor] FFmpeg错误: [out#0/mpegts @ 0x600003c7c3c0] Error opening output srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live: Input/output error
+2025-03-26 18:23:14,993 ERROR [FFmpegMonitor] FFmpeg错误: Error opening output file srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live.
+2025-03-26 18:23:14,994 ERROR [FrameConsumer] FFmpeg管道已关闭 (1/3)，尝试重启
+2025-03-26 18:23:14,996 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:14,996 ERROR [FrameConsumer] FFmpeg管道已关闭 (2/3)，尝试重启
+2025-03-26 18:23:14,996 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:14,996 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:14,996 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:14,997 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:14,997 WARNING [FrameConsumer] FFmpeg进程已终止，重启中...
+2025-03-26 18:23:14,997 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:14,996 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:14,997 INFO [FrameConsumer] 重启FFmpeg进程
+2025-03-26 18:23:14,997 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:15,134 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:15,373 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:15,606 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:15,843 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:15,856 WARNING [MainThread] 健康检查: FFmpeg进程已终止
+2025-03-26 18:23:15,856 INFO [MainThread] 重启FFmpeg进程
+2025-03-26 18:23:15,999 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:16,000 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:16,009 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:16,009 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:16,009 INFO [FrameConsumer] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:16,030 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:16,031 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:16,038 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:16,040 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:16,042 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:16,042 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:16,042 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:16,043 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:16,043 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:16,044 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:16,044 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:16,045 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:16,047 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:16,047 INFO [FrameConsumer] FFmpeg推流进程启动成功
+2025-03-26 18:23:16,156 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:16,406 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:16,756 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:16,857 INFO [MainThread] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:16,870 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:16,870 INFO [MainThread] FFmpeg推流进程启动成功
+2025-03-26 18:23:16,986 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:17,201 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:17,444 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:17,711 WARNING [FrameProducer] 队列满，已丢弃 40 帧
+2025-03-26 18:23:17,713 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:17,956 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:18,172 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:18,409 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:18,641 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:18,864 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:19,113 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:19,126 ERROR [FFmpegMonitor] FFmpeg错误: [srt @ 0x600002afc320] Connection to srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live failed: Input/output error
+2025-03-26 18:23:19,135 ERROR [FrameConsumer] FFmpeg管道已关闭 (1/3)，尝试重启
+2025-03-26 18:23:19,135 INFO [FrameConsumer] 已发送 8 帧, 实际FPS: 0.44, 队列中: 10
+2025-03-26 18:23:19,329 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:19,565 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:19,867 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:20,178 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:20,402 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:20,634 WARNING [FrameProducer] 队列满，已丢弃 50 帧
+2025-03-26 18:23:20,634 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:20,892 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:21,148 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:21,380 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:21,608 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:21,855 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:22,139 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:22,159 ERROR [FFmpegMonitor] FFmpeg错误: [srt @ 0x600001794140] Connection to srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live failed: Input/output error
+2025-03-26 18:23:22,162 ERROR [FFmpegMonitor] FFmpeg错误: [out#0/mpegts @ 0x600001390000] Error opening output srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live: Input/output error
+2025-03-26 18:23:22,162 ERROR [FFmpegMonitor] FFmpeg错误: Error opening output file srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live.
+2025-03-26 18:23:22,162 ERROR [FFmpegMonitor] FFmpeg错误: Error opening output files: Input/output error
+2025-03-26 18:23:22,162 WARNING [FFmpegMonitor] 检测到3个FFmpeg错误，尝试重启
+2025-03-26 18:23:22,162 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:22,162 INFO [FFmpegMonitor] 终止现有FFmpeg进程
+2025-03-26 18:23:22,163 ERROR [FrameConsumer] FFmpeg管道已关闭 (1/3)，尝试重启
+2025-03-26 18:23:22,163 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:22,164 WARNING [FrameConsumer] FFmpeg进程已终止，重启中...
+2025-03-26 18:23:22,164 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:22,164 INFO [FrameConsumer] 重启FFmpeg进程
+2025-03-26 18:23:22,380 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:22,658 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:22,899 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:23,138 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:23,164 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:23,164 INFO [FrameConsumer] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:23,180 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:23,199 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:23,207 INFO [FrameConsumer] FFmpeg推流进程启动成功
+2025-03-26 18:23:23,208 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:23,212 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:23,213 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:23,213 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:23,213 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:23,374 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:23,613 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:23,851 WARNING [FrameProducer] 队列满，已丢弃 60 帧
+2025-03-26 18:23:23,851 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:24,077 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:24,311 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:24,528 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:24,793 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:25,029 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:25,257 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:25,499 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:25,773 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:25,987 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:26,220 WARNING [FrameProducer] 队列满，已丢弃 70 帧
+2025-03-26 18:23:26,223 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:26,286 ERROR [FFmpegMonitor] FFmpeg错误: [srt @ 0x600002cf0320] Connection to srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live failed: Input/output error
+2025-03-26 18:23:26,288 ERROR [FFmpegMonitor] FFmpeg错误: [srt @ 0x600001e14320] Connection to srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live failed: Input/output error
+2025-03-26 18:23:26,295 ERROR [FFmpegMonitor] FFmpeg错误: [out#0/mpegts @ 0x6000028f0000] Error opening output srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live: Input/output error
+2025-03-26 18:23:26,296 ERROR [FFmpegMonitor] FFmpeg错误: Error opening output file srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live.
+2025-03-26 18:23:26,297 ERROR [FrameConsumer] FFmpeg管道已关闭 (1/3)，尝试重启
+2025-03-26 18:23:26,297 INFO [FrameConsumer] 已发送 11 帧, 实际FPS: 0.43, 队列中: 10
+2025-03-26 18:23:26,297 WARNING [FrameConsumer] FFmpeg进程已终止，重启中...
+2025-03-26 18:23:26,297 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:26,297 INFO [FrameConsumer] 重启FFmpeg进程
+2025-03-26 18:23:26,297 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:26,297 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:26,297 WARNING [FFmpegMonitor] FFmpeg进程已终止
+2025-03-26 18:23:26,297 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:26,297 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:26,297 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:26,297 INFO [FFmpegMonitor] 重启FFmpeg进程
+2025-03-26 18:23:26,458 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:26,695 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:26,872 WARNING [MainThread] 健康检查: FFmpeg进程已终止
+2025-03-26 18:23:26,872 INFO [MainThread] 重启FFmpeg进程
+2025-03-26 18:23:26,926 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:27,159 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:27,302 INFO [FrameConsumer] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:27,303 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:27,303 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:27,303 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:27,303 INFO [FFmpegMonitor] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:27,332 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:27,332 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:27,354 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:27,358 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:27,358 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:27,359 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:27,358 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:27,359 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:27,358 INFO [FrameConsumer] FFmpeg推流进程启动成功
+2025-03-26 18:23:27,359 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:27,359 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:27,360 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:27,361 INFO [FFmpegMonitor] FFmpeg推流进程启动成功
+2025-03-26 18:23:27,361 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:27,505 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:27,757 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:27,872 INFO [MainThread] 启动FFmpeg推流进程 -> srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live
+2025-03-26 18:23:27,889 INFO [FFmpegMonitor] FFmpeg监控线程启动
+2025-03-26 18:23:27,889 INFO [MainThread] FFmpeg推流进程启动成功
+2025-03-26 18:23:28,041 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:28,262 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:28,480 INFO [MainThread] 接收到信号 2，正在关闭
+2025-03-26 18:23:28,480 INFO [MainThread] 停止SRT推流
+2025-03-26 18:23:28,504 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:28,508 ERROR [FFmpegMonitor] FFmpeg错误: [out#0/mpegts @ 0x600003688000] Error opening output srt://127.0.0.1:9000?mode=caller&latency=200&transtype=live: Immediate exit requested
+2025-03-26 18:23:28,508 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:28,510 ERROR [FrameConsumer] FFmpeg管道已关闭 (1/3)，尝试重启
+2025-03-26 18:23:28,510 INFO [FrameConsumer] 帧消费者线程结束，共发送 12 帧
+2025-03-26 18:23:28,531 ERROR [FrameProducer] 帧生产者线程错误: Unknown C++ exception from OpenCV code
+2025-03-26 18:23:28,636 INFO [FrameProducer] 帧生产者线程结束，共捕获 107 帧，丢弃 77 帧
+2025-03-26 18:23:28,681 INFO [MainThread] 摄像头已关闭
+2025-03-26 18:23:28,684 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:28,698 INFO [MainThread] FFmpeg进程已关闭
+2025-03-26 18:23:28,698 INFO [MainThread] SRT服务器已关闭
+2025-03-26 18:23:28,699 INFO [MainThread] 最终统计: 捕获 107 帧, 发送 12 帧, FFmpeg重启 22 次, 平均FPS 0.43
+2025-03-26 18:23:28,699 INFO [MainThread] 所有资源已释放
+2025-03-26 18:23:28,765 INFO [MainThread] 接收到信号 2，正在关闭
+2025-03-26 18:23:29,007 INFO [MainThread] 接收到信号 2，正在关闭
+2025-03-26 18:23:31,592 INFO [MainThread] 接收到信号 2，正在关闭
+2025-03-26 18:23:31,593 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:31,596 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:31,596 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:31,597 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:31,597 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:31,598 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:31,598 INFO [FFmpegMonitor] FFmpeg监控线程结束
+2025-03-26 18:23:31,776 INFO [MainThread] 接收到信号 2，正在关闭
+2025-03-26 18:23:32,455 INFO [MainThread] 接收到信号 2，正在关闭

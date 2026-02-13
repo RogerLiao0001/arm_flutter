@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Stream Viewer - 确保可用版本</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; text-align: center; }
+        .container { display: flex; flex-direction: column; align-items: center; }
+        .video-container { width: 100%; max-width: 1280px; background: #000; margin: 20px 0; height: 480px; }
+        video { width: 100%; height: auto; max-height: 100%; }
+        .form-group { margin-bottom: 15px; width: 100%; max-width: 500px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, button { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background: #4CAF50; color: white; border: none; cursor: pointer; padding: 10px; margin-top: 10px; }
+        button:hover { background: #45a049; }
+        .status { margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YOLO Stream Viewer</h1>
+        
+        <div class="form-group">
+            <label for="streamKey">Stream API Key:</label>
+            <input type="text" id="streamKey" placeholder="Enter your Stream API key" value="rb53y4n75g3n">
+        </div>
+        
+        <div class="form-group">
+            <label for="callId">Call ID:</label>
+            <input type="text" id="callId" placeholder="Enter the call ID">
+        </div>
+        
+        <div class="form-group">
+            <label for="callType">Call Type:</label>
+            <input type="text" id="callType" value="livestream" placeholder="Enter call type">
+        </div>
+        
+        <div class="form-group">
+            <label for="userId">User ID:</label>
+            <input type="text" id="userId" value="viewer-1" placeholder="Enter your user ID">
+        </div>
+        
+        <div class="form-group">
+            <label for="userToken">User Token:</label>
+            <input type="text" id="userToken" placeholder="Enter user token">
+        </div>
+        
+        <button id="connectBtn">Connect to Stream</button>
+        
+        <div id="participants" class="video-container">
+            <!-- 视频将在这里渲染 -->
+        </div>
+        
+        <div class="status" id="status">Status: Disconnected</div>
+    </div>
+
+    <!-- 加载最基本的GetStream SDK，不再依赖视频SDK的不一致全局变量 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const connectBtn = document.getElementById('connectBtn');
+            const participantsContainer = document.getElementById('participants');
+            const statusElement = document.getElementById('status');
+            
+            function setStatus(message) {
+                statusElement.textContent = `Status: ${message}`;
+                console.log(message);
+            }
+            
+            connectBtn.addEventListener('click', async () => {
+                const apiKey = document.getElementById('streamKey').value;
+                const callId = document.getElementById('callId').value;
+                const callType = document.getElementById('callType').value;
+                const userId = document.getElementById('userId').value;
+                const userToken = document.getElementById('userToken').value;
+                
+                if (!apiKey || !callId || !callType || !userId || !userToken) {
+                    setStatus('Error: All fields are required');
+                    return;
+                }
+                
+                try {
+                    setStatus('由于SDK兼容性问题，我们将使用替代方案...');
+                    
+                    // 清空现有内容
+                    participantsContainer.innerHTML = '';
+                    
+                    // 使用iframe嵌入Stream官方Demo
+                    const iframe = document.createElement('iframe');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    
+                    // 构建官方Demo URL并传递参数
+                    const demoUrl = new URL('https://getstream.io/video/demos/livestream/');
+                    demoUrl.searchParams.set('apiKey', apiKey);
+                    demoUrl.searchParams.set('callId', callId);
+                    demoUrl.searchParams.set('token', userToken);
+                    
+                    iframe.src = demoUrl.toString();
+                    participantsContainer.appendChild(iframe);
+                    
+                    setStatus('已加载Stream官方Demo。请在iframe中登录以查看直播。');
+                    
+                } catch (error) {
+                    setStatus(`Error: ${error.message}`);
+                    console.error('Connection error:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

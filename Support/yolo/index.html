@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>YOLO Stream Viewer</title>
+    <meta charset="UTF-8" />
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+      .container { display: flex; flex-direction: column; align-items: center; }
+      .video-container { width: 100%; max-width: 1280px; aspect-ratio: 16/9; background: #000; }
+      video { width: 100%; height: 100%; }
+      button { background: #4CAF50; color: white; border: none; cursor: pointer; padding: 10px; margin: 10px; }
+      .status { margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>YOLO Stream Viewer</h1>
+      
+      <div id="video-container" class="video-container">
+        <!-- Video will be rendered here -->
+      </div>
+      
+      <div>
+        <button id="join-button">加入直播</button>
+        <button id="leave-button" disabled>离开直播</button>
+      </div>
+      
+      <div id="status" class="status">状态: 未连接</div>
+    </div>
+
+    <!-- 使用官方推荐的SDK -->
+    <script type="module">
+      // 导入官方SDK
+      import { StreamVideoClient } from 'https://cdn.skypack.dev/@stream-io/video-client';
+      
+      // 固定配置 - 您可以修改这些值
+      const apiKey = 'rb53y4n75g3n'; // 您的公开API Key
+      const callType = 'livestream';
+      
+      // 从URL参数中获取配置
+      const urlParams = new URLSearchParams(window.location.search);
+      const callId = urlParams.get('callId') || '';
+      const userId = urlParams.get('userId') || 'viewer-' + Math.random().toString(36).substring(2, 8);
+      const userName = urlParams.get('userName') || 'Viewer';
+      const userToken = urlParams.get('token') || '';
+      
+      const statusElement = document.getElementById('status');
+      const videoContainer = document.getElementById('video-container');
+      const joinButton = document.getElementById('join-button');
+      const leaveButton = document.getElementById('leave-button');
+      
+      let client;
+      let call;
+      
+      // 显示状态
+      function setStatus(message) {
+        statusElement.textContent = `状态: ${message}`;
+        console.log(message);
+      }
+      
+      // 加入直播
+      async function joinCall() {
+        if (!apiKey || !callId || !userToken) {
+          setStatus('缺少必要参数，请检查URL');
+          return;
+        }
+        
+        try {
+          setStatus('正在连接...');
+          
+          // 初始化客户端
+          client = new StreamVideoClient({
+            apiKey,
+            user: { 
+              id: userId,
+              name: userName 
+            },
+            token: userToken
+          });
+          
+          // 创建调用
+          call = client.call(callType, callId);
+          
+          // 监听状态变化
+          call.state.backstage$.subscribe((backstage) => {
+            if (backstage) {
+              setStatus('直播处于后台模式，等待主播开始...');
+            } else {
+              setStatus('直播已开始！');
+            }
+          });
+          
+          // 监听参与者数量
+          call.state.participantCount$.subscribe((count) => {
+            if (count > 0) {
+              setStatus(`直播中: ${count} 人观看`);
+            }
+          });
+          
+          // 加入通话
+          await call.join({ audio: false, video: false });
+          setStatus('已加入直播，等待视频...');
+          
+          // 监听并显示远程视频
+          call.state.remoteParticipants$.subscribe((participants) => {
+            // 清空容器
+            videoContainer.innerHTML = '';
+            
+            if (participants.length === 0) {
+              setStatus('等待主播发送视频...');
+              return;
+            }
+            
+            // 显示视频
+            participants.forEach(participant => {
+              participant.videoTracks.forEach(track => {
+                const videoElement = document.createElement('video');
+                videoElement.autoplay = true;
+                videoElement.playsInline = true;
+                videoElement.muted = false;
+                
+                videoContainer.appendChild(videoElement);
+                track.track?.attach(videoElement);
+                
+                setStatus(`正在播放 ${participant.name || participant.id} 的视频`);
+              });
+            });
+          });
+          
+          // 更新按钮状态
+          joinButton.disabled = true;
+          leaveButton.disabled = false;
+          
+        } catch (error) {
+          setStatus(`连接错误: ${error.message}`);
+          console.error('连接错误:', error);
+        }
+      }
+      
+      // 离开直播
+      async function leaveCall() {
+        if (call) {
+          try {
+            await call.leave();
+            setStatus('已离开直播');
+          } catch (error) {
+            setStatus(`离开错误: ${error.message}`);
+          }
+        }
+        
+        // 清空视频容器
+        videoContainer.innerHTML = '';
+        
+        // 更新按钮状态
+        joinButton.disabled = false;
+        leaveButton.disabled = true;
+      }
+      
+      // 绑定按钮事件
+      joinButton.addEventListener('click', joinCall);
+      leaveButton.addEventListener('click', leaveCall);
+      
+      // 如果URL包含所有参数，自动加入
+      if (callId && userToken) {
+        joinCall();
+      } else {
+        setStatus('请通过URL参数提供callId和token');
+      }
+    </script>
+  </body>
+</html>

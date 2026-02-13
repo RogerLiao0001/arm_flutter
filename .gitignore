@@ -1,0 +1,18 @@
+# Temporary deployment files
+app/temp/*.tar.gz
+app/temp/*.pkg
+app/temp/*.pem
+
+# Sensitive files - API keys and secrets
+app/temp/development.env
+app/temp/*.env
+**/.env
+**/*.pem
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.env

@@ -1,0 +1,26 @@
+<annotation>
+	<folder>yolotest</folder>
+	<filename>3.jpg</filename>
+	<path>/Users/roger/CWorks/機械手臂/yolotest/3.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>735</width>
+		<height>413</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>dog</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>271</xmin>
+			<ymin>84</ymin>
+			<xmax>432</xmax>
+			<ymax>321</ymax>
+		</bndbox>
+	</object>
+</annotation>
